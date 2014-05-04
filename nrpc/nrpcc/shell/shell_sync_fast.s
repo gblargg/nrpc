@@ -1,41 +1,27 @@
 ; Synchronous, fast (relies on open-bus)
 
-:	lsr $4017
-	bcc :-
-	jsr serial_read_inl_
+	jsr serial_read_first
 
 def_vectors
 
-.macro serial_read_core load_crc
+serial_read:
 	bit $4017
-	.if SERIAL_NOWAIT
-		bit $4017
-	.else
-	:	lsr $4017
-		bcc :-
-	.endif
-@inl:
-	load_crc
-	eor $4017
+serial_read_first:
+:	lsr $4017
+	bcc :-
+serial_read_inl_:
+	lda $4017
 	asl a
 	.repeat 6
 		eor $4017
 		rol a
 	.endrepeat
-	adc $4017
-.endmacro
-
-serial_read:
-crc = <serial_read_inl_ + 1
-	serial_read_core {lda #0}
+	eor $4017
+crc = <* + 1
+	eor #0
 	sta <crc
-serial_read_inl_ = @inl
 begin_block:
 	rts
-
-.macro serial_read_inl
-	serial_read_core {}
-.endmacro
 
 	; Receive codelet
 	; 1 STA/JMP 2 addr 1 -len n data
@@ -47,16 +33,24 @@ first_codelet_byte:
 	tax
 	jsr serial_read
 	bne data_error
-	bit <codelet
+	lda <codelet
 	bpl jsr_codelet
+	clc
 core_loop:
-	serial_read_inl
+	bit $4017
+	bit $4017
+	.repeat 7
+		eor $4017
+		rol a
+	.endrepeat
+	eor $4017
 codelet:
 	sta $7777, x		; STA $xxxx,x / STA $xxxx / JMP $xxxx
 	inx
 	bne core_loop
+	adc #0
 	sta <crc
-	beq main
+	jmp main			; BRA
 	
 jsr_codelet:
 	txs					; S = $ff

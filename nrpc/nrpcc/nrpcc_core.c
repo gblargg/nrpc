@@ -19,7 +19,7 @@ static int flags;
 static nrpcc_out_f hook;
 static int out_crc;
 static int sync_fast_open_bus = 0x40;
-static int sync_fast_xor = 0x7f;
+static int sync_fast_xor = 0x1df;
 
 static int is_async( void ) { return !(flags & nrpcc_sync); }
 
@@ -41,23 +41,16 @@ void nrpcc_set_openbus( int open_bus )
 	int i;
 	for ( i = 0; i < 8; i++ )
 		if ( open_bus >> i & 1 )
-			sync_fast_xor ^= 0x3f8 << i;
+			sync_fast_xor ^= 0xff << i;
 	
 	sync_fast_xor ^= sync_fast_xor >> 9;
 	sync_fast_xor &= 0x1ff;
-	
 }
 
 static int sync_fast_encode( int in, int crc )
 {
-	int out = crc ^ sync_fast_xor;
-	out = (out << 7 & 0x180) | (out >> 2 & 0x7f);
-	
-	int t = (in ^ out ^ (out >> 8)) & 1;
-	in -= sync_fast_open_bus + t + (out >> 8 & 1);
-	out = ((out ^ in) & 0xfe) | t;
-	
-	return out;
+	int out = (crc << 7 & 0x180) | (crc >> 2 & 0x7f);
+	return out ^ in ^ sync_fast_xor;
 }
 
 static void write_out_crc( int in )
@@ -78,7 +71,8 @@ static void write_out_crc( int in )
 	}
 	else if ( flags & nrpcc_fast )
 	{
-		write_out( sync_fast_encode( in, out_crc ) );
+		int out = sync_fast_encode( in, 0 );
+		write_out( (out ^ out_crc) & 0xff );
 		out_crc = in;
 	}
 	else
@@ -149,12 +143,28 @@ static void do_op( byte op, int addr, const unsigned char in [], int size, int i
 	else
 	{
 		write_out_crc( 0 );
+		if ( (flags & nrpcc_fast) && op >= 0x80 )
+			out_crc = op;
 	}
 	
 	if ( in )
 	{
-		for ( i = 0; i < size; i++ )
-			write_out_crc( in [i] );
+		if ( !is_async() && (flags & nrpcc_fast) )
+		{
+			for ( i = 0; i < size; i++ )
+			{
+				int data = in [i];
+				int out = sync_fast_encode( data, out_crc );
+				write_out( out & 0xff );
+				out_crc = (out & 0x100) | data;
+			}
+			out_crc = (out_crc & 0xff) + (out_crc >> 8 & 1);
+		}
+		else
+		{
+			for ( i = 0; i < size; i++ )
+				write_out_crc( in [i] );
+		}
 	}
 }
 
