@@ -8,12 +8,8 @@ def_vectors
 
 .macro serial_read_core
 	bit $4017
-	.if SERIAL_NOWAIT
-		bit $4017
-	.else
-	:	lsr $4017
-		bcc :-
-	.endif
+:	lsr $4017
+	bcc :-
 @inl:
 	lda $4017
 	.repeat 7

@@ -6,9 +6,6 @@
 .ifndef SERIAL_FAST
 	SERIAL_FAST = 0
 .endif
-.ifndef SERIAL_NOWAIT
-	SERIAL_NOWAIT = 0
-.endif
 SERIAL_MASK = $01 ; for clarity; only $01 supported
 BLOCK_SIG = $d3
 
