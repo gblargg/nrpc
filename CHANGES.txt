@@ -1,3 +1,4 @@
++ Add serial_read_inl for commands to get 6 extra cycles between bytes.
 + Prep for read primitive: smaller serial_write routines (unfortunately slows sync version slightly).
 + Prep for read primitive: use Y for indexing.
 + Move functions between nrpcc.c and nrpcc_core.c and minor tweaks.

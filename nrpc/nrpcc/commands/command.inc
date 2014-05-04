@@ -24,6 +24,22 @@ begin_block			= $10 + 3*3
 ; Timing: 8-14 cycles of code between JSR serial_read
 serial_read			= $10 + 3*4 + 2
 
+; Same as serial_read, but gives 6 extra cycles
+; Timing: 10-20 cycles of code between serial_read_inl invocations
+.macro serial_read_inl
+	.local @wait
+	lda #SERIAL_MASK
+@wait:
+	bit $4017
+	beq @wait
+	jsr serial_read_inl_
+.endmacro
+serial_read_inl_	= $10 + 3*4
+
+.ifndef SERIAL_MASK
+	SERIAL_MASK = $17
+.endif
+
 ; $00-$09 are free for use and not modified by the shell
 ; $0a-$17f are reserved for the shell
 ; $180-$7ff can be used in any way
