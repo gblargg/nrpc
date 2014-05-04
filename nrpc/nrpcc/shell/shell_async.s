@@ -199,6 +199,8 @@ serial_write:
 	bne @loop
 @saved_a = <* + 1
 	lda #0
+	eor <out_crc
+	sta <out_crc
 	rts
 
 .else
@@ -236,6 +238,8 @@ serial_write:
 	bit $4017
 @saved_a = <* + 1
 	lda #0
+	eor <out_crc
+	sta <out_crc
 	rts
 
 .endif

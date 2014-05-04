@@ -30,7 +30,7 @@ enum {
 void nrpcc_set_openbus( int open_bus );
 
 
-//// Memory
+//// Memory writing
 
 // Writes/fills to size bytes starting at addr
 void nrpcc_write_byte( int addr, unsigned char value );
@@ -47,6 +47,27 @@ void nrpcc_set_ppuaddr( int addr );
 // Writes/fills to size bytes starting at addr in PPU space
 void nrpcc_write_ppu( int addr, const unsigned char in [], int size );
 void nrpcc_fill_ppu( int addr, unsigned char fill, int size );
+
+
+// Memory reading
+
+// The NES sends the requested data back. You are responsible for actually reading
+// them back from serial. An internal CRC kept of all data read. CRC is just XOR of all bytes.
+
+// Reads bytes starting at addr.
+void nrpcc_read_mem( int addr, int size );
+
+// Reads bytes from port at addr.
+void nrpcc_read_port( int addr, int size );
+
+// Resets CRC. Must be called before first read.
+void nrpcc_reset_crc( void );
+
+// Reads current CRC, then resets it.
+void nrpcc_read_crc( void );
+
+// Calculates CRC. Pass 0 initially. Include CRC byte after data. Result should be 0.
+int nrpcc_calc_crc( const unsigned char in [], int size, int crc );
 
 
 //// User commands
@@ -88,12 +109,6 @@ void nrpcc_debug_beep( void );
 
 // Stops shell in infinite loop
 void nrpcc_debug_stop( void );
-
-// Reads bytes starting at addr. You are responsible for actually reading them back from serial.
-void nrpcc_read_mem( int addr, int size );
-
-// Reads bytes from port at addr. You are responsible for actually reading them back from serial.
-void nrpcc_read_port( int addr, int size );
 
 #ifdef __cplusplus
 	}

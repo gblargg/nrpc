@@ -217,3 +217,24 @@ void nrpcc_read_port( int addr, int size )
 	};
 	nrpcc_download( code, sizeof code, size );
 }
+
+void nrpcc_reset_crc( void )
+{
+	nrpcc_write_byte( 0x00ff, 0 );
+}
+
+void nrpcc_read_crc( void )
+{
+	const unsigned char code [] = {
+		0xa5,0xff,    	// lda $ff
+		0x4c,0x16,0x00,	// jmp $0016
+	};
+	nrpcc_download( code, sizeof code, 1 );
+}
+
+int nrpcc_calc_crc( const byte in [], int size, int crc )
+{
+	while ( size-- )
+		crc ^= *in++;
+	return crc;
+}

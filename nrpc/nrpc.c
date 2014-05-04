@@ -196,6 +196,26 @@ void nrpc_debug_char( nrpc_t* m, char c )
 	nrpcc_debug_char( c );
 }
 
+void nrpc_read_mem( nrpc_t* m, nrpc_addr_t addr, int size )
+{
+	nrpcc_read_mem( addr, size );
+}
+
+void nrpc_read_port( nrpc_t* m, nrpc_addr_t addr, int size )
+{
+	nrpcc_read_port( addr, size );
+}
+
+void nrpc_reset_crc( nrpc_t* m )
+{
+	nrpcc_reset_crc();
+}
+
+int nrpc_calc_crc( nrpc_t* m, const unsigned char* in, int count, int old_crc )
+{
+	return nrpcc_calc_crc( in, count, old_crc );
+}
+
 
 //// Optimized writing
 

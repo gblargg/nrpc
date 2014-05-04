@@ -29,4 +29,6 @@ serial_write:
 	bit $4017
 	ror a
 .endif
+	eor <out_crc
+	sta <out_crc
 	rts

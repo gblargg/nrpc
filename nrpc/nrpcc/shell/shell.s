@@ -24,6 +24,8 @@ BLOCK_SIG = $d3
 	ldx #$ff
 	txs
 
+out_crc = <$ff
+
 .macro debug_dump_mem addr, count
 debug_dump_used = 1
 	ldy #0
@@ -76,3 +78,5 @@ error:
 .else
 	.include "shell_async.s"
 .endif
+
+	.res 1 ; space for out_crc

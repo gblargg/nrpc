@@ -66,6 +66,31 @@ void nrpc_write_ppu( nrpc_t*, nrpc_addr_t, const unsigned char* in, int size );
 void nrpc_fill_ppu( nrpc_t*, nrpc_addr_t, int value, int size );
 
 
+/**** Reading ****/
+
+/* Data is sent back to PC, without any protocol. Use nrpc_read_crc() along
+with nrpc_calc_crc() to verify integrity of received data. */
+
+/** Reads size bytes starting at addr and updates CRC. */
+void nrpc_read_mem( nrpc_t*, nrpc_addr_t, int size );
+
+/** Reads size bytes from port at addr and updates CRC. */
+void nrpc_read_port( nrpc_t*, nrpc_addr_t, int size );
+
+/** Resets CRC. Use before first memory read. */
+void nrpc_reset_crc( nrpc_t* );
+
+/** Reads CRC of all data before this, then resets it. */
+void nrpc_read_crc( nrpc_t* );
+#define nrpc_crc_size 1
+
+/** Calculates CRC of received data. Pass 0 for old_crc on first call, or
+previous value to calculate CRC of multiple blocks. Include final CRC data
+after received data. Result should be nrpc_correct_crc. */
+int nrpc_calc_crc( nrpc_t*, const unsigned char* in, int count, int old_crc );
+#define nrpc_correct_crc 0
+
+
 /**** User commands ****/
 
 /** Command code is written to and executed from this address. */
