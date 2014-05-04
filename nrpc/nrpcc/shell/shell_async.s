@@ -181,12 +181,15 @@ main:
 .if SERIAL_FAST
 
 serial_write:
+	pha
+	eor <out_crc
+	sta <out_crc
+	
 	; Start bit
 	asl a
 	sta $4016			; 15
-	ror a
+	nop
 	sec
-	sta a:@saved_a
 	bcs @first
 	
 	; 8 data bits + stop bit
@@ -200,29 +203,27 @@ serial_write:
 
 	sta $4016			; 15
 	lsr a
-	pha
-	pla
 	clc
-	
+	pha
 @first:
+	pla
+	
 	sta $4016			; 16/14
 	ror a
 	bne @loop
-@saved_a = <* + 1
-	lda #0
-	eor <out_crc
-	sta <out_crc
 	rts
 
 .else
 
 serial_write:
-	sta <@saved_a
+	pha
+	eor <out_crc
+	sta <out_crc
 	
 	; Start bit
 	lda #0
 	sta $4016
-	lda a:@saved_a
+	pla
 	sec
 	sta <serial_temp_
 	
@@ -235,7 +236,7 @@ serial_write:
 		nop
 	.endif
 	
-	bit $4017
+	bit $4017			; compatibility with sync serial
 	lda <serial_temp_
 	and #$01
 	ror <serial_temp_
@@ -243,14 +244,10 @@ serial_write:
 	beq @done
 	nop
 	clc
-	jmp @loop
+	bcc @loop
 	
 @done:
-	bit $4017
-@saved_a = <* + 1
-	lda #0
-	eor <out_crc
-	sta <out_crc
+	bit $4017			; compatibility with sync serial
 	rts
 
 .endif
