@@ -25,6 +25,10 @@ enum {
 	nrpcc_baud_fast = 115200  // 8N2 (2 stop bits)
 };
 
+// Sets controller open-bus value. Normally 0x40. PowerPak needs 0xe0. Only used by
+// synchronous fast serial.
+void nrpcc_set_openbus( int open_bus );
+
 
 //// Memory
 

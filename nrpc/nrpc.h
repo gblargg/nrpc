@@ -32,6 +32,10 @@ enum {
 	nrpc_fast   = 0x01  /**< Faster synchronous serial, less compatible */
 };
 
+/** Sets controller open-bus value. Normally 0x40. PowerPak needs 0xe0. Only used
+by synchronous fast serial. */
+void nrpc_set_openbus( nrpc_t*, int open_bus );
+
 /** Deletes recorder, freeing memory. OK to pass NULL. */
 void nrpc_delete( nrpc_t* );
 

@@ -97,6 +97,7 @@ nrpc_t* nrpc_new( int new_flags )
 	nrpcc_init( flags, out_hook );
 	if ( flags & (nrpc_fast | nrpc_sync) )
 		nrpc_57600_count_ = 256;
+	nrpc_set_openbus( nrpc, 0x40 );
 	
 	return nrpc;
 }
@@ -123,6 +124,11 @@ void nrpc_call_code( nrpc_t* m, nrpc_addr_t dest, const unsigned char* in, int i
 }
 
 //// Simple wrappers
+
+void nrpc_set_openbus( nrpc_t* m, int open_bus )
+{
+	nrpcc_set_openbus( open_bus );
+}
 
 void nrpc_command( nrpc_t* m, const unsigned char* in, int size, int cycles )
 {

@@ -18,6 +18,8 @@ enum { nrpcc_op_max_size = 256 };
 static int flags;
 static nrpcc_out_f hook;
 static int out_crc;
+static int sync_fast_open_bus = 0x40;
+static int sync_fast_xor = 0x7f;
 
 static int is_async( void ) { return !(flags & nrpcc_sync); }
 
@@ -32,13 +34,27 @@ static void write_out( int in )
 	hook( out ^ 0xff );
 }
 
+void nrpcc_set_openbus( int open_bus )
+{
+	sync_fast_open_bus = open_bus;
+	sync_fast_xor = 0;
+	int i;
+	for ( i = 0; i < 8; i++ )
+		if ( open_bus >> i & 1 )
+			sync_fast_xor ^= 0x3f8 << i;
+	
+	sync_fast_xor ^= sync_fast_xor >> 9;
+	sync_fast_xor &= 0x1ff;
+	
+}
+
 static int sync_fast_encode( int in, int crc )
 {
-	int out = crc ^ 0x7f;
+	int out = crc ^ sync_fast_xor;
 	out = (out << 7 & 0x180) | (out >> 2 & 0x7f);
 	
 	int t = (in ^ out ^ (out >> 8)) & 1;
-	in -= 0x40 + t + (out >> 8 & 1);
+	in -= sync_fast_open_bus + t + (out >> 8 & 1);
 	out = ((out ^ in) & 0xfe) | t;
 	
 	return out;
@@ -46,6 +62,15 @@ static int sync_fast_encode( int in, int crc )
 
 static void write_out_crc( int in )
 {
+	// One-time action just after shell has been started
+	if ( out_crc < 0 )
+	{
+		out_crc = 0;
+		
+		if ( flags & nrpcc_sync )
+			write_out_crc( 0 );
+	}
+	
 	if ( is_async() )
 	{
 		write_out( in );
@@ -235,9 +260,6 @@ void nrpcc_init( int new_flags, nrpcc_out_f new_hook )
 		hook( shell [i] );
 	
 	nrpcc_delay_cycles( 8700 );
-	
-	out_crc = 0;
-	
-	if ( flags & nrpcc_sync )
-		write_out_crc( 0 );
+		
+	out_crc = -1;
 }
