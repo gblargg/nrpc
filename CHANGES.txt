@@ -1,3 +1,4 @@
++ Make 57600 serial work with data on $4017 D0, D1, D2, or D4, rather than only on D0. Other speeds still require D0.
 + Eliminate SERIAL_NOWAIT, since it only affects sync serial, and hardly affects it.
 + Eliminate USE_CRC from shell.s, since it was never optional.
 + Fixed broken CRC algorithm in sync fast serial to actually detect errors in any byte.

@@ -1,129 +1,139 @@
 ; Asynchronous
 
-	lda #1
+	lda #1		; idle state to avoid first byte to PC being garbage
 	sta $4016
-	nop
+	ldx #$ff	; init stack
+	txs
 
-serial_temp_ = <$e
-rxd = <$f
+serial_temp_ = <$f
 
 def_vectors
 
-.macro serial_read_inl
-	.local @wait
+serial_read:
 	lda #SERIAL_MASK
 @wait:
 	bit $4017
 	beq @wait
-	jsr serial_read_inl
-	lsr $4017
-	rol a
-	sta <rxd
-.endmacro
-
-serial_read:
-	serial_read_inl
-	rts
-
+	pha			; 9 delay equivalent to JSR + JMP
+	pla
+	nop
+	
 .if SERIAL_FAST
 
-serial_read_inl_:	; 20/18
+serial_read_inl_:	; 20/18 (+3.5 for start bit loop)
+rxd = <rxd_		; avoid ca65 "suspicious" warning
 	lda <rxd
 	.if !SERIAL_PAL
 		nop
 	.endif
 	lsr $4017	; 15
 crc = <* + 1
-	eor #$ea
+	eor #0
 	sta <crc
-	lda #$04
+	lda #$02
 	rol a
 	
 	lsr $4017	; 16/14
 	rol a
 	bcc @first	; BRA
 	
-@bit:
-	lsr $4017	; 15/14
+@loop:
+	lsr $4017	; 15/14 (16/14 last time)
 	rol a
 	.if SERIAL_PAL
-		bit <serial_temp_
+		bcs @end
+		ora #0
+		nop
 	.else
 		nop
-		nop
+		bcs @end
+		bit <serial_temp_
 	.endif
-	bit <serial_temp_
 	
 	lsr $4017	; 16/15
 	rol a
 	.if SERIAL_PAL
+		ora #0
 		nop
-		bcs @end
 	@first:
 	.else
 		bit <serial_temp_
 	@first:
-		bcs @end
-	.endif
-	bcc @bit	; BRA
-	
-@end:
-	nop
-	
-	lsr $4017	; 16
-	rol a
-	.if !SERIAL_PAL
 		nop
 	.endif
+	bcc @loop	; BRA
+	
+@end:
+	bit <serial_temp_
+	
+	lsr $4017
+	rol a
+	sta <rxd
 	rts
+
+rxd_:
+	.byte 0
 
 .else
 
 serial_read_inl_:
-	lda <rxd
-crc = <* + 1
-	eor #$ea
-	sta a:crc
-	lda #$02
+rxd = <* + 1		; update CRC
+	lda #0
+crc = <* + 1		; avoid ca65 "suspicious" warning
+	eor #0
+	sta <crc
+	
+	lda #$02		; do 7 iterations until bit shifts out top
 	clc
-	bcc :+
-@bit:
-	inc <serial_temp_
-	lsr $4017
+	bcc @first
+@loop:
 	nop
-	nop
-	nop
-	nop
+	and $4017		; read and mask bit
+	cmp #1
+@final = <@final_
+	lda <@final
 	rol a
 	
+	nop				; delay
+	nop
+	nop
 	.if SERIAL_PAL
 		ora #0
-		bit <serial_temp_
-	:
-	.else
-		bit <serial_temp_
-	:	nop
+	.endif
+@first:
+	.if !SERIAL_PAL
+		nop
 		nop
 	.endif
 	
-	bcc @bit
+	sta <@final
+	lda #SERIAL_MASK
+	bcc @loop
+	
+	bit <@final
+	and $4017		; final bit
+	cmp #1
+@final_ = <* + 1
+	lda #0
+	rol a
+	sta <rxd
 	rts
 
 .endif
 
-.macro serial_sync
+serial_sync:
 	lda #SERIAL_MASK
 :	bit $4017
 	beq :-
 :	bit $4017
 	bne :-
-.endmacro
+	rts
 
 begin_block:
 	lda <rxd
 	cmp <crc
 	bne data_error
-	serial_sync
+	jsr serial_sync
 :	jsr serial_read
 	eor #$ff
 	sta <rxd	; preserve CRC
@@ -156,16 +166,16 @@ wait_block:
 	ldx #-3
 :	jsr serial_read
 	eor #$ff
-	sta <rxd	; preserve CRC
+	sta <rxd			; preserve CRC
 	bne first_codelet_byte
-	beq :-
+	beq :-				; BRA
 
 jsr_codelet:
 	txs					; S = $ff
 	jsr codelet
 main:
-	serial_sync
-	jmp wait_block
+	jsr serial_sync
+	beq wait_block		; BRA
 
 .if SERIAL_FAST
 

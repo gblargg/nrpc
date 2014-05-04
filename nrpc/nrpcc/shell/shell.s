@@ -6,7 +6,14 @@
 .ifndef SERIAL_FAST
 	SERIAL_FAST = 0
 .endif
-SERIAL_MASK = $01 ; for clarity; only $01 supported
+
+; only 57600 supports multiple serial RX bits
+.if (!SERIAL_SYNC) && (!SERIAL_FAST)
+	SERIAL_MASK = %10111
+.else
+	SERIAL_MASK = $01
+.endif
+
 BLOCK_SIG = $d3
 
 ; Copyright (C) 2014 Shay Green <gblargg@gmail.com>
