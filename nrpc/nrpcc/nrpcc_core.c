@@ -88,12 +88,20 @@ static void write_out_crc( int in )
 	}
 }
 
+static void write_delay( int n )
+{
+	while ( n-- )
+		write_out( 0xff );
+}
+
 void nrpcc_delay_bytes( int n )
 {
 	assert( n >= 0 );
 	
-	while ( n-- )
-		write_out( 0xff );
+	if ( !(flags & nrpcc_sync) )
+		n += n / 5; // 10% margin for error
+	
+	write_delay( n );
 }
 
 void nrpcc_delay_cycles( int cyc )
@@ -110,7 +118,7 @@ void nrpcc_delay_cycles( int cyc )
 		int clock = (flags & nrpcc_pal) ? 1662607 : 1789772;
 		int bps = (flags & nrpcc_fast) ? fast : slow;
 		int cyc_per_byte = clock / bps;
-		nrpcc_delay_bytes( (cyc + (cyc_per_byte - 100)) / cyc_per_byte );
+		write_delay( (cyc + (cyc_per_byte - 100)) / cyc_per_byte );
 	}
 }
 
@@ -155,7 +163,7 @@ void nrpcc_jsr( int addr )
 	// JMP (size=1 passes $ff to load into X for TXS before JSR)
 	do_op( 0x4c, addr, 0, 1, 0 );
 	if ( is_async() )
-		nrpcc_delay_bytes( 1 );
+		write_delay( 1 );
 }
 
 static void nrpcc_op_write_mem( int addr, const unsigned char in [], int size )
@@ -222,7 +230,7 @@ void nrpcc_send_block( const byte in [], int size )
 		write_out_crc( *in++ );
 	
 	if ( is_async() )
-		nrpcc_delay_bytes( 1 );
+		write_delay( 1 );
 }
 
 /* Converts 256-byte block of user code (beginning at offset 4)
