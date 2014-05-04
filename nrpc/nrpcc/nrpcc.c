@@ -9,6 +9,7 @@ Copying and distribution of this file, with or without modification, are
 permitted in any medium without royalty provided the copyright notice and
 this notice are preserved. This file is offered as-is, without any warranty.*/
 
+enum { nrpcc_op_max_size = 256 };
 typedef unsigned char byte;
 
 void nrpcc_run_code( const byte in [], int size )
@@ -65,6 +66,39 @@ void nrpcc_debug_stop( void )
 		0x4c,0x00,0x02, // jmp $200
 	};
 	nrpcc_command( code, sizeof code, 0 );
+}
+
+// Breaks operation into nrpcc_op_max_size-byte chunks
+static void nrpcc_write_( int addr, int inc_addr, const byte in [], int remain,
+		void (*func)( int addr, const byte in [], int size ) )
+{
+	assert( remain >= 0 );
+	
+	while ( remain )
+	{
+		int n = nrpcc_op_max_size;
+		if ( n > remain )
+			n = remain;
+		
+		func( addr, in, n );
+		in += n;
+		if ( inc_addr )
+			addr += n;
+		
+		remain -= n;
+	}
+}
+
+void nrpcc_write_mem( int addr, const byte in [], int size )
+{
+	void nrpcc_op_write_mem( int addr, const unsigned char in [], int size );
+	nrpcc_write_( addr, 1, in, size, nrpcc_op_write_mem );
+}
+
+void nrpcc_write_port( int addr, const byte in [], int size )
+{
+	void nrpcc_op_write_port( int addr, const unsigned char in [], int size );
+	nrpcc_write_( addr, 0, in, size, nrpcc_op_write_port );
 }
 
 void nrpcc_fill_mem( int addr, byte fill, int size )
@@ -258,11 +292,4 @@ void nrpcc_read_crc( void )
 		0x4c,0x16,0x00,	// jmp $0016
 	};
 	nrpcc_download( code, sizeof code, 1 );
-}
-
-int nrpcc_calc_crc( const byte in [], int size, int crc )
-{
-	while ( size-- )
-		crc ^= *in++;
-	return crc;
 }

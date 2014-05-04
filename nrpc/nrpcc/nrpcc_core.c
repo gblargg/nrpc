@@ -13,7 +13,6 @@ this notice are preserved. This file is offered as-is, without any warranty.*/
 
 typedef unsigned char byte;
 enum { block_signature = 0xd3 }; // least-common byte and reading in middle can't yield same value
-enum { nrpcc_op_max_size = 256 };
 
 static int flags;
 static nrpcc_out_f hook;
@@ -77,7 +76,7 @@ static void write_out_crc( int in )
 	}
 	else
 	{
-		write_out( out_crc ^ in );
+		write_out( in ^ out_crc );
 		out_crc = in;
 	}
 }
@@ -92,7 +91,7 @@ void nrpcc_delay_bytes( int n )
 {
 	assert( n >= 0 );
 	
-	if ( !(flags & nrpcc_sync) )
+	if ( is_async() )
 		n += n / 5; // 10% margin for error
 	
 	write_delay( n );
@@ -102,7 +101,7 @@ void nrpcc_delay_cycles( int cyc )
 {
 	assert( cyc >= 0 );
 	
-	if ( !(flags & nrpcc_sync) )
+	if ( is_async() )
 	{
 		enum { // Assume 5% higher rate
 			slow = nrpcc_baud      * 105 / 100 / 10,
@@ -121,14 +120,15 @@ static void do_op( byte op, int addr, const unsigned char in [], int size, int i
 	if ( size == 0 )
 		return;
 	
-	assert( 1 <= size && size <= nrpcc_op_max_size );
-	
-	if ( is_async() )
-		op ^= 0xff;
+	assert( 1 <= size && size <= 256 );
 	
 	int x = 256 - size;
 	if ( indexed )
 		addr -= x;
+	
+	if ( is_async() )
+		op ^= 0xff; // undone in serial sync loop
+	
 	byte h [4] = { op, addr & 0xff, addr >> 8, x };
 	
 	int i;
@@ -176,50 +176,21 @@ void nrpcc_jsr( int addr )
 		write_delay( 1 );
 }
 
-static void nrpcc_op_write_mem( int addr, const unsigned char in [], int size )
+void nrpcc_op_write_mem( int addr, const unsigned char in [], int size )
 {
+	assert( in );
 	do_op( 0x9d, addr, in, size, 1 ); // STA $xxxx,X
 }
 
-static void nrpcc_op_write_port( int addr, const unsigned char in [], int size )
+void nrpcc_op_write_port( int addr, const unsigned char in [], int size )
 {
+	assert( in );
 	do_op( 0x8d, addr, in, size, 0 ); // STA $xxxx
 }
 
-// Breaks operation into nrpcc_op_max_size-byte chunks
-static void nrpcc_write_( int addr, int inc_addr, const byte in [], int remain,
-		void (*func)( int addr, const byte in [], int size ) )
+int nrpcc_calc_crc( const byte in [], int size, int crc )
 {
-	assert( remain >= 0 );
-	
-	while ( remain )
-	{
-		int n = nrpcc_op_max_size;
-		if ( n > remain )
-			n = remain;
-		
-		func( addr, in, n );
-		in += n;
-		if ( inc_addr )
-			addr += n;
-		
-		remain -= n;
-	}
-}
-
-void nrpcc_write_mem( int addr, const byte in [], int size )
-{
-	nrpcc_write_( addr, 1, in, size, nrpcc_op_write_mem );
-}
-
-void nrpcc_write_port( int addr, const byte in [], int size )
-{
-	nrpcc_write_( addr, 0, in, size, nrpcc_op_write_port );
-}
-
-static byte calc_crc( const byte in [], int size )
-{
-	byte crc = 0;
+	assert( size >= 0 );
 	while ( size-- )
 		crc ^= *in++;
 	return crc;
@@ -233,7 +204,7 @@ void nrpcc_send_block( const byte in [], int size )
 	{
 		out_crc ^= 0xff;
 		write_out_crc( block_signature );
-		write_out_crc( out_crc ^ calc_crc( in, size ) );
+		write_out_crc( nrpcc_calc_crc( in, size, out_crc ) );
 	}
 	
 	while ( size-- )

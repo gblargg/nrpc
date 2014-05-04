@@ -41,7 +41,7 @@ void nrpcc_fill_mem( int addr, unsigned char fill, int size );
 void nrpcc_write_port( int addr, const unsigned char in [], int size );
 void nrpcc_fill_port( int addr, unsigned char fill, int size );
 
-// Disables rendering and sets PPU address
+// Disables rendering and sets PPU address (for writing directly to 0x2007)
 void nrpcc_set_ppuaddr( int addr );
 
 // Writes/fills to size bytes starting at addr in PPU space
