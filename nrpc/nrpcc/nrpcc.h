@@ -89,6 +89,12 @@ void nrpcc_debug_beep( void );
 // Stops shell in infinite loop
 void nrpcc_debug_stop( void );
 
+// Reads bytes starting at addr. You are responsible for actually reading them back from serial.
+void nrpcc_read_mem( int addr, int size );
+
+// Reads bytes from port at addr. You are responsible for actually reading them back from serial.
+void nrpcc_read_port( int addr, int size );
+
 #ifdef __cplusplus
 	}
 #endif

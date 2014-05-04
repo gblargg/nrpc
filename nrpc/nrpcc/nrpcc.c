@@ -177,3 +177,43 @@ void nrpcc_fill_ppu( int addr, byte fill, int size )
 	nrpcc_set_ppuaddr( addr );
 	nrpcc_fill_port( 0x2007, fill, size );
 }
+
+void nrpcc_read_mem( int addr, int size )
+{
+	int y = -size >> 0 & 0xff;
+	int x = -size >> 8 & 0xff;
+	addr -= y;
+	
+	const unsigned char code [] = {
+		0xa2, x,    		// ldx #$77
+		0xa0, y,    		// ldy #$77
+		0xb9, addr, addr>>8,// lda $7777,y
+		0x20,0x16,0x00,		// jsr $0016
+		0xc8,        		// iny
+		0xd0,0xf7,    		// bne $0004
+		0xee,0x06,0x02,		// inc $0206
+		0xe8,        		// inx
+		0xd0,0xf1,    		// bne $0004
+		0x60,        		// rts
+	};
+	nrpcc_download( code, sizeof code, size );
+}
+
+void nrpcc_read_port( int addr, int size )
+{
+	int y = -size >> 0 & 0xff;
+	int x = -size >> 8 & 0xff;
+	
+	const unsigned char code [] = {
+		0xa2, x,    		// ldx #$77
+		0xa0, y,    		// ldy #$77
+		0xad, addr, addr>>8,// lda $7777
+		0x20,0x16,0x00,		// jsr $0016
+		0xc8,        		// iny
+		0xd0,0xf7,    		// bne $0004
+		0xe8,        		// inx
+		0xd0,0xf4,    		// bne $0004
+		0x60,        		// rts
+	};
+	nrpcc_download( code, sizeof code, size );
+}

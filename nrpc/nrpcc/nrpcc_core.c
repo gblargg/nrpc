@@ -260,6 +260,6 @@ void nrpcc_init( int new_flags, nrpcc_out_f new_hook )
 		hook( shell [i] );
 	
 	nrpcc_delay_cycles( 8700 );
-		
+	
 	out_crc = -1;
 }
