@@ -184,6 +184,18 @@ void nrpcc_op_write_port( int addr, const unsigned char in [], int size )
 	do_op( 0x8d, addr, in, size, 0 ); // STA $nnnn
 }
 
+void nrpcc_op_read_mem( int addr, int size )
+{
+	do_op( 0xb1 >> 1, addr, 0, size, 1 ); // LDA ($nn),Y
+	nrpcc_delay_bytes( size + is_async() );
+}
+
+void nrpcc_op_read_port( int addr, int size )
+{
+	do_op( 0xa1 >> 1, addr, 0, size, 0 ); // LDA ($nn,X)
+	nrpcc_delay_bytes( size + is_async() );
+}
+
 int nrpcc_calc_crc( const byte in [], int size, int crc )
 {
 	assert( size >= 0 );

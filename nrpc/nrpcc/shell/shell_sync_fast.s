@@ -33,8 +33,9 @@ first_codelet_byte:
 	tay
 	jsr serial_read
 	bne data_error
+codelet = <codelet_
 	lda <codelet
-	bpl jsr_codelet
+	bpl other_cmd
 	clc
 core_loop:
 	bit $4017
@@ -44,7 +45,7 @@ core_loop:
 		rol a
 	.endrepeat
 	eor $4017
-codelet:
+codelet_:
 	sta $7777, y		; STA $nnnn,Y / STA $nnnn / JMP $nnnn
 	iny
 	bne core_loop
@@ -52,7 +53,9 @@ codelet:
 	sta <crc
 	jmp main			; BRA
 	
-jsr_codelet:
+other_cmd:
+	cmp #$50
+	bcs send
 	dex					; S = $ff
 	txs
 	jsr codelet
@@ -60,6 +63,16 @@ jsr_codelet:
 main:
 	ldx #-4
 	bne first_codelet_byte	; BRA
+
+send:
+	rol a
+	sta <send_loop
+send_loop:
+	lda (<codelet+1), y	; LDA (codelet),Y / LDA (codelet,X)
+	jsr serial_write
+	iny
+	bne send_loop
+	beq main			; BRA
 
 def_error
 

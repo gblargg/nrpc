@@ -154,10 +154,11 @@ first_codelet_byte:
 	jsr serial_read
 	eor <crc
 	bne data_error
-	bit <codelet
-	bpl jsr_codelet
+codelet = <codelet_
+	lda <codelet
+	bpl other_cmd
 :	jsr serial_read
-codelet:
+codelet_:
 	sta $7777, y		; STA $nnnn,Y / STA $nnnn / JMP $nnnn
 	iny
 	bne :-
@@ -170,13 +171,25 @@ wait_block:
 	bne first_codelet_byte
 	beq :-				; BRA
 
-jsr_codelet:
+other_cmd:
+	cmp #$50
+	bcs send
 	dex					; S = $ff
 	txs
 	jsr codelet
 main:
 	jsr serial_sync
 	beq wait_block		; BRA
+
+send:
+	rol a
+	sta <send_loop
+send_loop:
+	lda (<codelet+1), y
+	jsr serial_write
+	iny
+	bne send_loop
+	beq main			; BRA
 
 .if SERIAL_FAST
 

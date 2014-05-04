@@ -101,6 +101,38 @@ void nrpcc_write_port( int addr, const byte in [], int size )
 	nrpcc_write_( addr, 0, in, size, nrpcc_op_write_port );
 }
 
+// Breaks operation into nrpcc_op_max_size-byte chunks
+static void nrpcc_read_( int addr, int inc_addr, int remain,
+		void (*func)( int addr, int size ) )
+{
+	assert( remain >= 0 );
+	
+	while ( remain )
+	{
+		int n = nrpcc_op_max_size;
+		if ( n > remain )
+			n = remain;
+		
+		func( addr, n );
+		if ( inc_addr )
+			addr += n;
+		
+		remain -= n;
+	}
+}
+
+void nrpcc_read_mem( int addr, int size )
+{
+	void nrpcc_op_read_mem( int addr, int size );
+	nrpcc_read_( addr, 1, size, nrpcc_op_read_mem );
+}
+
+void nrpcc_read_port( int addr, int size )
+{
+	void nrpcc_op_read_port( int addr, int size );
+	nrpcc_read_( addr, 0, size, nrpcc_op_read_port );
+}
+
 void nrpcc_fill_mem( int addr, byte fill, int size )
 {
 	assert( size >= 0 );
@@ -212,46 +244,6 @@ void nrpcc_fill_ppu( int addr, byte fill, int size )
 	nrpcc_fill_port( 0x2007, fill, size );
 }
 
-void nrpcc_read_mem( int addr, int size )
-{
-	int y = -size >> 0 & 0xff;
-	int x = -size >> 8 & 0xff;
-	addr -= y;
-	
-	const unsigned char code [] = {
-		0xa2, x,    		// ldx #$77
-		0xa0, y,    		// ldy #$77
-		0xb9, addr, addr>>8,// lda $7777,y
-		0x20,0x16,0x00,		// jsr $0016
-		0xc8,        		// iny
-		0xd0,0xf7,    		// bne $0004
-		0xee,0x06,0x02,		// inc $0206
-		0xe8,        		// inx
-		0xd0,0xf1,    		// bne $0004
-		0x60,        		// rts
-	};
-	nrpcc_download( code, sizeof code, size );
-}
-
-void nrpcc_read_port( int addr, int size )
-{
-	int y = -size >> 0 & 0xff;
-	int x = -size >> 8 & 0xff;
-	
-	const unsigned char code [] = {
-		0xa2, x,    		// ldx #$77
-		0xa0, y,    		// ldy #$77
-		0xad, addr, addr>>8,// lda $7777
-		0x20,0x16,0x00,		// jsr $0016
-		0xc8,        		// iny
-		0xd0,0xf7,    		// bne $0004
-		0xe8,        		// inx
-		0xd0,0xf4,    		// bne $0004
-		0x60,        		// rts
-	};
-	nrpcc_download( code, sizeof code, size );
-}
-
 void nrpcc_read_ppu( int addr, int size )
 {
 	int y = -size >> 0 & 0xff;
@@ -287,9 +279,5 @@ void nrpcc_reset_crc( void )
 
 void nrpcc_read_crc( void )
 {
-	const unsigned char code [] = {
-		0xa5,0xff,    	// lda $ff
-		0x4c,0x16,0x00,	// jmp $0016
-	};
-	nrpcc_download( code, sizeof code, 1 );
+	nrpcc_read_mem( 0x00ff, 1 );
 }
