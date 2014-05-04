@@ -60,6 +60,9 @@ void nrpcc_read_mem( int addr, int size );
 // Reads bytes from port at addr.
 void nrpcc_read_port( int addr, int size );
 
+// Reads bytes starting at addr in PPU space.
+void nrpcc_read_ppu( int addr, int size );
+
 // Resets CRC. Must be called before first read.
 void nrpcc_reset_crc( void );
 

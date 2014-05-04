@@ -77,6 +77,9 @@ void nrpc_read_mem( nrpc_t*, nrpc_addr_t, int size );
 /** Reads size bytes from port at addr and updates CRC. */
 void nrpc_read_port( nrpc_t*, nrpc_addr_t, int size );
 
+/** Reads size bytes starting at addr in PPU address space and updates. */
+void nrpc_read_ppu( nrpc_t*, nrpc_addr_t, int size );
+
 /** Resets CRC. Use before first memory read. */
 void nrpc_reset_crc( nrpc_t* );
 

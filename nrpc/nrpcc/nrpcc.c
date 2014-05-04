@@ -218,6 +218,34 @@ void nrpcc_read_port( int addr, int size )
 	nrpcc_download( code, sizeof code, size );
 }
 
+void nrpcc_read_ppu( int addr, int size )
+{
+	int y = -size >> 0 & 0xff;
+	int x = -size >> 8 & 0xff;
+	
+	const unsigned char code [] = {
+		0xa9,0x00,    	// lda #$00
+		0x8d,0x00,0x20,	// sta $2000
+		0x8d,0x01,0x20,	// sta $2001
+		0x2c,0x02,0x20,	// bit $2002
+		0xa9, addr>>8,  // lda #$77
+		0x8d,0x06,0x20,	// sta $2006
+		0xa9, addr,    	// lda #$77
+		0x8d,0x06,0x20,	// sta $2006
+		0x2c,0x07,0x20,	// bit $2007
+		0xa2, x,    	// ldx #$77
+		0xa0, y,    	// ldy #$77
+		0xad,0x07,0x20,	// lda $2007
+		0x20,0x16,0x00,	// jsr $0016
+		0xc8,        	// iny
+		0xd0,0xf7,    	// bne $001c
+		0xe8,        	// inx
+		0xd0,0xf4,    	// bne $001c
+		0x60,        	// rts
+	};
+	nrpcc_download( code, sizeof code, size );
+}
+
 void nrpcc_reset_crc( void )
 {
 	nrpcc_write_byte( 0x00ff, 0 );
