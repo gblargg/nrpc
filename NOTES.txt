@@ -1,0 +1,23 @@
+
+
+Misc
+----
+* nrpcc is core of implementation. nrpc is a more stable interface wrapper that also implemets the fill/copy optimization.
+
+
+Serial formats
+--------------
+Six different serial configurations are supported, with varying speeds and compatibility. All use some form of checksum (CRC) to catch data corruption/missed data.
+
+Asynchronous serial requires specifying whether the NES is NTSC or PAL. NTSC also works on the Famicom and Dendy clone. Asynchronous modes all use 8 data bits, no parity. 115200 uses two stop bits, to give the NES enough time to process bytes. 57600 is quite reliable while 115200 pushes timing to the limit and may not work with some interfaces.
+
+Synchronous serial uses the controller clock line as the bit clock the same way a controller does, allowing the NES to receive at a higher speed. By default it uses a robust approach that should work with anything. The faster option depends on the other controller inputs and open-bus bits all reading back as zero, except with bit 6 always set ($40). This has failed in some cases, especially on the Famicom.
+
+KB/sec  BPS  Stop Flags
+- - - - - - - - - - - - - - - - - - - -
+ 5.4   57600  1   nrpc_ntsc
+ 5.4   57600  1   nrpc_pal
+10.1  115200  2   nrpc_ntsc | nrpc_fast
+10.1  115200  2   nrpc_pal  | nrpc_fast
+19.8    sync  1   nrpc_sync
+25.3    sync  1   nrpc_sync | nrpc_fast	

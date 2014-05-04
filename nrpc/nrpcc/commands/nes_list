@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -o nounset
+set -o errexit
+
+ca65 "$1" -o /tmp/nes_list
+ld65 -C command.cfg -o /tmp/nes_list /tmp/nes_list
+hexdump -v -e '1/1 "0x%02x, "' /tmp/nes_list | sed -e 's/0x77/ARG/g'
+rm /tmp/nes_list
+echo

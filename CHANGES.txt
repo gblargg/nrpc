@@ -1,0 +1,34 @@
+2.0.0 (2014-04-21)
+------------------
+* Total rewrite with simpler implementation.
++ Now uses GNU Permissive License with minimal restrictions on use.
++ Adds support for synchronous serial at 25KB/sec.
++ Commands you write work for sync/async serial, PAL/NTSC, without multiple versions, since they just call read/write routines.
++ The serial routines now handle checksumming internally without needing you to preserve in A the previous byte.
+- No library of code; you manage it, usually a local array in the function.
+- Commands can send data back, but library does no handling, just gives you plain serial_write; it's all up to you.
+- nrpc_call_code() doesn't accept the four arguments as before. They must now be done by patching code before sending it.
+- Functions eliminated with no equivalent: nrpc_load_library, nrpc_write_mmc1, nrpc_read_mem, nrpc_read_ppu, nrpc_read_crc, nrpc_calc_crc, nrpc_call, nrpc_call_extra, nrpc_delay_msec, nrpc_zero_pad, nrpc_load_mem_library, nrpc_routine_exists, nrpc_missing_routines, nrpc_send, nrpc_send_raw
+
+
+1.2 (2010-11-29)
+----------------
++ New bootloader allows automatic NTSC/PAL selection in most cases, so that you an pass false to nrpc_new(). Only if you have separately assembled routines for NTSC and PAL do you need to tell nrpc_new() what type of NES it's running on (none of the standard routines need this).
++ Serial routines now use virtually the best timing possible on the NES, whereas before they were a couple of cycles off. Everything has been carefully analyzed to ensure that it is always within the best margins possible.
++ Serial routines don't depend on open-bus $4017 reads anymore. This was causing problems on the Famicom, and possibly on the NES, as the high bit sometimes read back set rather than clear. This reduces time available between bytes, unfortunately. A workaround is to use two stop bits, adding an extra 29 cycles.
++ Added crc_read_host_inline, which gives 12 additional cycles between bytes.
+* Switched to 8-bit CRC, as 16-bit CRC as overkill and bloated serial routines.
+- Changed read/write functions to use unsigned char* rather than void*, to avoid accidental passing of some unrelated pointer. Most often, you have an unsigned char array anyway, so no cast is needed.
+- Registers on entry to routine are NOT guaranteed to be initialized, unlike previously where they were always cleared.
+- fatal_error takes error code in X now, rather than Y.
+- Uses new bootloader.
+
+
+1.1 (2010-09-24)
+----------------
++ nrpc_load_mem_library()
++ Routine library format more robust
++ nrpc_write_mem() and nrpc_write_ppu() do RLE optimization to reduce amount of data sent
++ Fixed bug in crc_read_serial, though it shouldn't have affected anything
++ Now, 0-$2F is NEVER modified by loader, so you can use it for persistent globals, or even loading small final routine into.
+- Eliminated update_crc for now, since it was just clutter.
