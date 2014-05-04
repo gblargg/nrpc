@@ -1,3 +1,5 @@
++ Eliminate USE_CRC from shell.s, since it was never optional.
++ Fixed broken CRC algorithm in sync fast serial to actually detect errors in any byte.
 + Added missing nrpc_read_crc().
 + Added nrpc_read_ppu() to read interface.
 

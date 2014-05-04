@@ -25,21 +25,17 @@ def_vectors
 serial_read:
 	serial_read_core
 serial_read_inl_ = @inl
-	.if USE_CRC
 crc = <crc_ + 1
-		eor <crc
-		sta <crc
-	.endif
+	eor <crc
+	sta <crc
 begin_block:
 	rts
 
 .macro serial_read_inl
 	serial_read_core
-	.if USE_CRC
 crc_: ; extra label avoids "suspicious address expression" warning
-		eor #0
-		sta <crc
-	.endif
+	eor #0
+	sta <crc
 .endmacro
 
 	; Receive codelet
@@ -51,9 +47,6 @@ first_codelet_byte:
 	bne :-
 	tax
 	jsr serial_read
-	.if !USE_CRC
-		eor #BLOCK_SIG
-	.endif
 	bne data_error
 	bit <codelet
 	bpl jsr_codelet

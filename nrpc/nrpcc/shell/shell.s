@@ -6,9 +6,6 @@
 .ifndef SERIAL_FAST
 	SERIAL_FAST = 0
 .endif
-.ifndef USE_CRC
-	USE_CRC = 1
-.endif
 .ifndef SERIAL_NOWAIT
 	SERIAL_NOWAIT = 0
 .endif
