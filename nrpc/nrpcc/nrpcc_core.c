@@ -117,9 +117,6 @@ void nrpcc_delay_cycles( int cyc )
 
 static void do_op( byte op, int addr, const unsigned char in [], int size, int indexed )
 {
-	if ( size == 0 )
-		return;
-	
 	assert( 1 <= size && size <= 256 );
 	
 	int x = 256 - size;
@@ -170,8 +167,7 @@ static void do_op( byte op, int addr, const unsigned char in [], int size, int i
 
 void nrpcc_jsr( int addr )
 {
-	// JMP (size=1 passes $ff to load into X for TXS before JSR)
-	do_op( 0x4c, addr, 0, 1, 0 );
+	do_op( 0x4c, addr, 0, 256, 0 ); // JMP $nnnn
 	if ( is_async() )
 		write_delay( 1 );
 }
@@ -179,13 +175,13 @@ void nrpcc_jsr( int addr )
 void nrpcc_op_write_mem( int addr, const unsigned char in [], int size )
 {
 	assert( in );
-	do_op( 0x9d, addr, in, size, 1 ); // STA $xxxx,X
+	do_op( 0x99, addr, in, size, 1 ); // STA $nnnn,Y
 }
 
 void nrpcc_op_write_port( int addr, const unsigned char in [], int size )
 {
 	assert( in );
-	do_op( 0x8d, addr, in, size, 0 ); // STA $xxxx
+	do_op( 0x8d, addr, in, size, 0 ); // STA $nnnn
 }
 
 int nrpcc_calc_crc( const byte in [], int size, int crc )

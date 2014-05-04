@@ -30,7 +30,7 @@ first_codelet_byte:
 	jsr serial_read
 	inx
 	bne :-
-	tax
+	tay
 	jsr serial_read
 	bne data_error
 	lda <codelet
@@ -45,15 +45,16 @@ core_loop:
 	.endrepeat
 	eor $4017
 codelet:
-	sta $7777, x		; STA $xxxx,x / STA $xxxx / JMP $xxxx
-	inx
+	sta $7777, y		; STA $nnnn,Y / STA $nnnn / JMP $nnnn
+	iny
 	bne core_loop
 	adc #0
 	sta <crc
 	jmp main			; BRA
 	
 jsr_codelet:
-	txs					; S = $ff
+	dex					; S = $ff
+	txs
 	jsr codelet
 
 main:

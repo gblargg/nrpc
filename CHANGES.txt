@@ -1,3 +1,4 @@
++ Prep for read primitive: use Y for indexing.
 + Move functions between nrpcc.c and nrpcc_core.c and minor tweaks.
 + Make 57600 serial work with data on $4017 D0, D1, D2, or D4, rather than only on D0. Other speeds still require D0.
 + Eliminate SERIAL_NOWAIT, since it only affects sync serial, and hardly affects it.

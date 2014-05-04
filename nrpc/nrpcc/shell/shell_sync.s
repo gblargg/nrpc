@@ -41,7 +41,7 @@ first_codelet_byte:
 	jsr serial_read
 	inx
 	bne :-
-	tax
+	tay
 	jsr serial_read
 	bne data_error
 	bit <codelet
@@ -49,13 +49,14 @@ first_codelet_byte:
 core_loop:
 	serial_read_inl
 codelet:
-	sta $7777, x		; STA $xxxx,x / STA $xxxx / JMP $xxxx
-	inx
+	sta $7777, y		; STA $nnnn,Y / STA $nnnn / JMP $nnnn
+	iny
 	bne core_loop
 	beq main
 	
 jsr_codelet:
-	txs					; S = $ff
+	dex					; S = $ff
+	txs
 	jsr codelet
 
 main:

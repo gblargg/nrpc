@@ -150,7 +150,7 @@ first_codelet_byte:
 	jsr serial_read
 	inx
 	bne :-
-	tax
+	tay
 	jsr serial_read
 	eor <crc
 	bne data_error
@@ -158,8 +158,8 @@ first_codelet_byte:
 	bpl jsr_codelet
 :	jsr serial_read
 codelet:
-	sta $7777, x		; STA $xxxx,x / STA $xxxx / JMP $xxxx
-	inx
+	sta $7777, y		; STA $nnnn,Y / STA $nnnn / JMP $nnnn
+	iny
 	bne :-
 	
 wait_block:
@@ -171,7 +171,8 @@ wait_block:
 	beq :-				; BRA
 
 jsr_codelet:
-	txs					; S = $ff
+	dex					; S = $ff
+	txs
 	jsr codelet
 main:
 	jsr serial_sync
