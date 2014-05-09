@@ -1,3 +1,4 @@
++ Keep async code size the same for NTSC/PAL
 + Add read as a primitive, greatly reducing overhead.
 + Add serial_read_inl for commands to get 6 extra cycles between bytes.
 + Prep for read primitive: smaller serial_write routines (unfortunately slows sync version slightly).

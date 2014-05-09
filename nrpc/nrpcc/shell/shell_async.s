@@ -16,8 +16,12 @@ serial_read:
 	beq @wait
 	pha			; 9 delay equivalent to JSR + JMP
 	pla
+.if SERIAL_FAST && SERIAL_PAL
+	ora #0		; keep PAL length the same
+.else
 	nop
-	
+.endif
+
 .if SERIAL_FAST
 
 serial_read_inl_:	; 20/18 (+3.5 for start bit loop)
